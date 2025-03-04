@@ -18,4 +18,9 @@ const signUpSchema = joi.object({
     .optional(),
 });
 
-module.exports = signUpSchema;
+const signInSchema = joi.object({
+  email: joi.string().email().required(),
+  password: joi.string().required()
+})
+
+module.exports = {signUpSchema, signInSchema};
