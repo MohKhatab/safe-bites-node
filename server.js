@@ -5,6 +5,8 @@ const app = express();
 
 // File imports
 const usersRouter = require("./routes/usersRouter");
+const siteReviewsRouter = require("./routes/siteReviewsRouter");
+const categoryRouter = require("./routes/categoriesRouter");
 const morgan = require("morgan");
 
 // Connect Database
@@ -12,9 +14,12 @@ connectDB();
 
 // Middleware pipleline
 app.use(express.json());
+
 app.use(morgan("dev"));
 
 app.use("/users", usersRouter);
+app.use("/siteReviews", siteReviewsRouter);
+app.use("/categories", categoryRouter);
 
 app.use((err, req, res, next) => {
   if (err) {
