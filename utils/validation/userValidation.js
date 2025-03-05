@@ -16,6 +16,7 @@ const signUpSchema = joi.object({
       street: joi.string(),
     })
     .optional(),
+  role: joi.string().default("user")
 });
 
 const signInSchema = joi.object({
