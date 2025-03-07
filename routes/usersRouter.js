@@ -10,7 +10,11 @@ router
   .get(protectMW,usersController.getUser)
   .post(validationMW(userSchema.signUpSchema), usersController.createUser);
 
-router.route("/:id").get(protectMW,roleMW("admin"),usersController.getUserById);
+router.route("/:id").get(protectMW,usersController.getUserById);
+
+router.route("/:id").put(protectMW,usersController.updateUser);
+
+router.route("/:id").delete(protectMW, roleMW("admin"), usersController.deleteUser);
 
 router.route("/login").post(validationMW(userSchema.signInSchema),usersController.loginUser)
 

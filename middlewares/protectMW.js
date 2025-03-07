@@ -5,6 +5,9 @@ const APIError = require("../utils/errors/APIError");
 function protectMW (req,res,next){
     try{
         let token = req.headers.authorization;
+        if (!token || !token.startsWith("Bearer ")) {
+            throw new APIError("No token provided or invalid token format", 401);
+        }
         token = token.split(" ")[1];
         let decodedData = jwt.verify(token, process.env.SECRETKEY);
         req.user = decodedData;
