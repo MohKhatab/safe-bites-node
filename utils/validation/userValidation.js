@@ -16,6 +16,12 @@ const signUpSchema = joi.object({
       street: joi.string(),
     })
     .optional(),
+  role: joi.string().default("user")
 });
 
-module.exports = signUpSchema;
+const signInSchema = joi.object({
+  email: joi.string().email().required(),
+  password: joi.string().required()
+})
+
+module.exports = {signUpSchema, signInSchema};

@@ -7,11 +7,14 @@ const app = express();
 const usersRouter = require("./routes/usersRouter");
 const productsRouter=require("./routes/productsRouter")
 
+const morgan = require("morgan");
+
 // Connect Database
 connectDB();
 
 // Middleware pipleline
 app.use(express.json());
+app.use(morgan("dev"));
 
 app.use("/users", usersRouter);
 app.use("/products", productsRouter);
