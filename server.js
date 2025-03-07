@@ -5,12 +5,14 @@ const app = express();
 
 // File imports
 const usersRouter = require("./routes/usersRouter");
+const morgan = require("morgan");
 
 // Connect Database
 connectDB();
 
 // Middleware pipleline
 app.use(express.json());
+app.use(morgan("dev"));
 
 app.use("/users", usersRouter);
 
