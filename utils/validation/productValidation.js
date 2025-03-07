@@ -1,22 +1,26 @@
-const joi=require("joi");
+const joi = require("joi");
 
 const productSchema = joi.object({
   name: joi.string().min(3).max(50).required(),
   brand: joi.string().min(3).max(50).required(),
   quantity: joi.number().integer().min(0).required(),
-  categoryTypes: joi.String().required(),
-  categories: joi.String().required(),
-  ingredients: joi.array().items(joi.string().required()).required(),
+  ingredients: joi.array().items(joi.string().required()).optional(),
+
+  categories: joi.array().items(joi.string()).optional(),
+
   nutritionalValues: joi
-    .object({
-      sodium: joi.string().optional(),
-      sugar: joi.string().optional(),
-      carbohydrates: joi.string().optional(),
-    })
+    .array()
+    .items(
+      joi.object({
+        nutrition: joi.string().required(),
+        amount: joi.string().required(),
+      })
+    )
     .optional(),
+
   reviews: joi.array().items(
     joi.object({
-      userId: joi.number().optional(),
+      userId: joi.string().optional(),
       rating: joi.number().integer().min(1).max(5).optional(),
       reviewDescription: joi.string().min(1).max(500).optional(),
     })
@@ -28,11 +32,8 @@ const productSchema = joi.object({
   price: joi.number().integer().min(0).required(),
   images: joi.array().items(joi.string().uri()).min(1).required(),
   viewsCount: joi.number().integer().min(0).default(0),
-  listDate: joi.date().required(),
   expiryDate: joi.date().required(),
 });
-
-
 
 module.exports = productSchema;
 

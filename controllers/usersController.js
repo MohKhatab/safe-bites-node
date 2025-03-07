@@ -40,36 +40,46 @@ const createUser = async (req, res, next) => {
 };
 
 const updateUser = async (req, res, next) => {
-  try{
+  try {
     if (req.body.password) {
       req.body.password = await bcrypt.hash(req.body.password, 10);
     }
 
-    req.body.lastUpdated = Date.now();
+    if (req.user.id != req.params.id) {
+      throw new APIError(
+        "Forbidden: You are not allowed to edit the data of another user",
+        403
+      );
+    }
 
-    const user = await User.findByIdAndUpdate(req.params.id, req.body,{new: true, runValidators: true});
-    if(!user){
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!user) {
       throw new APIError(`User not found`, 404);
     }
-    res.status(200).send({message: "User updated successfully", data: user});
-  }catch(err){
+
+    res.status(200).send({ message: "User updated successfully", data: user });
+  } catch (err) {
     next(err);
   }
-}
+};
 
 const deleteUser = async (req, res, next) => {
-  try{
+  try {
     const user = await User.findByIdAndDelete(req.params.id);
-    if(!user){
+    if (!user) {
       throw new APIError("User not found", 404);
     }
-    res.status(200).send({message: "User deleted successfully"});
-  }catch(err){
+    res.status(200).send({ message: "User deleted successfully" });
+  } catch (err) {
     next(err);
   }
-}
+};
 
-const loginUser = async (req, res, next)=>{
+const loginUser = async (req, res, next) => {
   const user = req.body;
   user.email = user.email.toLowerCase();
   let foundUser = await User.findOne({ email: user.email });
@@ -96,4 +106,11 @@ const loginUser = async (req, res, next)=>{
   res.status(200).json({ message: "Logged In Successfully" });
 };
 
-module.exports = { getUser, getUserById, createUser, updateUser, deleteUser, loginUser };
+module.exports = {
+  getUser,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+  loginUser,
+};

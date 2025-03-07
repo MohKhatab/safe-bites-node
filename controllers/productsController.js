@@ -1,23 +1,12 @@
 const { date, number, array } = require("joi");
 const { message, error } = require("../utils/validation/userValidation");
-const product = require("./../models/Product");
+const Product = require("./../models/Product");
 const APIError = require("./../utils/errors/APIError");
 
-//getAllProducts
-const getAllProducts = async (req, res, next) => {
-  try {
-    const products = await product.find();
-    res
-      .status(200)
-      .send({ message: "products fetched succesfully", data: products });
-  } catch (err) {
-    next(err);
-  }
-};
 //getProductById
 const getProductById = async (req, res, next) => {
   try {
-    const product = await product.findById(req.params.id);
+    const product = await Product.findById(req.params.id);
     if (!product) {
       throw new APIError("product not found", 404);
     }
@@ -32,7 +21,8 @@ const getProductById = async (req, res, next) => {
 //addProduct
 const addProduct = async (req, res, next) => {
   try {
-    const product = await product.create(req.body);
+    req.body.productOwner = req.user.id;
+    const product = await Product.create(req.body);
     res.status(200).send({ message: "added successfully ", data: product });
   } catch (err) {
     next(err);
@@ -42,12 +32,12 @@ const addProduct = async (req, res, next) => {
 // updateProduct
 const updateProduct = async (req, res, next) => {
   try {
-    const product = await product.findById(req.params.id);
+    const product = await Product.findById(req.params.id);
     if (!product) {
       throw new APIError("product not founded", 404);
     }
 
-    const updatedProduct = await product.findByIdAndUpdate(
+    const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
@@ -63,12 +53,12 @@ const updateProduct = async (req, res, next) => {
 //deleteProduct
 const deleteProduct = async (req, res, next) => {
   try {
-    const Product = await product.findById(req.params.id);
+    const product = await Product.findById(req.params.id);
     if (!product) {
       throw new APIError("product not founded", 404);
     }
 
-    await product.findByIdAndDelete(req.params.id);
+    await Product.findByIdAndDelete(req.params.id);
     res.status(200).send({ message: "deletted successfully" });
   } catch (err) {
     next(err);
@@ -76,70 +66,68 @@ const deleteProduct = async (req, res, next) => {
 };
 
 //filter
-const filteredProduct = async (req, res) => {
-    try{
-  const {
-    sortBy,
-    order,
-    inStock,
-    outOfStock,
-    minPrice,
-    maxPrice,
-    categoryTypes,
-    categories,
-  } = req.query;
-  const filter = {};
-  //available
-  if (inStock === "true" && outOfStock !== "true") {
-    filter.quantity = { $gt: 0 };
-  } else if (outOfStock === "true" && inStock !== "true") {
-    filter.quantity = { $eq: 0 };
-  }
-  //price
-  if (minPrice || maxPrice) {
-    filter.price = {};
-    if (minPrice) filter.price.$gte = number(minPrice);
-    if (maxPrice) filter.price.$lte = number(maxPrice);
-  }
-  //mainCategory
-  if (categoryTypes) {
-    let mainCategories;
-    if (Array.isArray(categoryTypes)) {
-      mainCategories = categoryTypes;
-    } else {
-      mainCategories = categoryTypes.split(",").map((item) => item.trim());
-    }
-    filter.mainCategory = {
-      $in: mainCategories.map((cat) => cat.toLowerCase()),
-    };
-  }
+const filteredProduct = async (req, res, next) => {
+  try {
+    const {
+      sortBy,
+      order,
+      inStock,
+      outOfStock,
+      minPrice,
+      maxPrice,
+      categories,
+    } = req.query;
+    const filter = {};
 
-  //subCategory
-  if (categories) {
-    let subCategories;
-    if (Array.isArray(categories)) {
-      subCategories = categories;
-    } else {
-      subCategories = categories.split(",").map((item) => item.trim());
+    // Available
+    if (inStock === "true" && outOfStock === "true") {
+      // Skip, no filter for stock
+    } else if (inStock === "true") {
+      // if only in stock is true
+      filter.quantity = { $gt: 0 };
+    } else if (outOfStock === "true") {
+      // if only out of stock is true
+      filter.quantity = { $eq: 0 };
     }
-    filter.category = { $in: categories.map((cat) => cat.toLowerCase()) };
-  }
 
-  //sorting
-  let sortCreteria = {};
-  if (sortBy) {
-    const sortOrder = order && order.toLowerCase() === "des" ? -1 : 1;
-    sortCreteria[sortBy] = sortOrder;
-  }
-  const products = await product.find(filter).sort(sortCreteria);
-  res.status(200).json({products})
-    }catch(err){
-        res.status(500).json({message:"error feching data",error:error.message})
+    //price
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = parseInt(minPrice);
+      if (maxPrice) filter.price.$lte = parseInt(maxPrice);
     }
+
+    //category
+    if (categories) {
+      const categoryArray = categories.split(",");
+      filter.categories = { $in: categoryArray };
+    }
+
+    //sorting
+    let sortCreteria = {};
+    if (sortBy) {
+      const lowerOrder = order.toLowerCase();
+      if (lowerOrder === "desc" || lowerOrder === "asc") {
+        sortCreteria[sortBy] = lowerOrder === "desc" ? -1 : 1;
+      }
+    }
+
+    const products = await Product.find(filter).sort(sortCreteria).populate({
+      path: "categories",
+      select: "name _id",
+    });
+
+    res.status(200).json({
+      message: "Fetched products successfully",
+      count: products.length,
+      products,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = {
-  getAllProducts,
   getProductById,
   addProduct,
   updateProduct,

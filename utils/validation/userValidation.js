@@ -16,12 +16,12 @@ const signUpSchema = joi.object({
       street: joi.string(),
     })
     .optional(),
-  role: joi.string().default("user")
+  role: joi.string().default("user"),
 });
 
 const signInSchema = joi.object({
   email: joi.string().email().required(),
-  password: joi.string().required()
-})
+  password: joi.string().required(),
+});
 
-module.exports = {signUpSchema, signInSchema};
+module.exports = { signUpSchema, signInSchema };
