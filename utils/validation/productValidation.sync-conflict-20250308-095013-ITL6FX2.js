@@ -18,6 +18,13 @@ const productSchema = joi.object({
     )
     .optional(),
 
+  reviews: joi.array().items(
+    joi.object({
+      userId: joi.string().optional(),
+      rating: joi.number().integer().min(1).max(5).optional(),
+      reviewDescription: joi.string().min(1).max(500).optional(),
+    })
+  ),
   productOwner: joi.string().optional(),
   weight: joi.string().required(),
   description: joi.string().min(3).max(200).required(),
