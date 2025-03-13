@@ -4,6 +4,13 @@ const connectDB = require("./db");
 const app = express();
 const cors = require("cors");
 
+// Google Auth
+const session = require("express-session");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20");
+const googleAuth = require("./controllers/authController");
+const authRouter = require("./routes/authRouter");
+
 // File imports
 const usersRouter = require("./routes/usersRouter");
 const siteReviewsRouter = require("./routes/siteReviewsRouter");
@@ -36,6 +43,35 @@ app.use("/siteReviews", siteReviewsRouter);
 app.use("/categories", categoryRouter);
 app.use("/products", productsRouter);
 app.use("/products/:id/reviews", productExistMW, reviewsRouter);
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true,
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: `http://localhost:${process.env.PORT}/auth/google/callback`,
+  passReqToCallback: true
+},
+  async (req, accessToken, refreshToken, profile, done) => {
+    try {
+        const data = await googleAuth(profile);
+        return done(null, data);
+    } catch (error) {
+        return done(error, null);
+    }
+  }
+));
+
+passport.serializeUser((data, done) => done(null, data));
+passport.deserializeUser((data, done) => done(null, data));
+
+app.use("/auth", authRouter);
 
 app.use((err, req, res, next) => {
   if (err) {
