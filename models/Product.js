@@ -176,4 +176,6 @@ productSchemaDb.pre("findOneAndDelete", async function (next) {
   }
 });
 
+productSchemaDb.index({ name: "text", description: "text" });
+
 module.exports = mongoose.model("Product", productSchemaDb);

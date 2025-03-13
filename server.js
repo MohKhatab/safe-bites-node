@@ -79,7 +79,7 @@ passport.deserializeUser((data, done) => done(null, data));
 app.use("/auth", authRouter);
 
 app.use((err, req, res, next) => {
-  if (err.cause.code === 11000) {
+  if (err.cause?.code === 11000) {
     return res.status(400).json({
       error: err.message,
     });

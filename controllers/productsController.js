@@ -75,10 +75,10 @@ const deleteProduct = async (req, res, next) => {
   }
 };
 
-//filter
 const filteredProduct = async (req, res, next) => {
   try {
     const {
+      search,
       sortBy,
       order,
       inStock,
@@ -88,6 +88,10 @@ const filteredProduct = async (req, res, next) => {
       categories,
     } = req.query;
     const filter = {};
+
+    if (search) {
+      filter.name = { $regex: search, $options: "i" };
+    }
 
     // Available
     if (inStock === "true" && outOfStock === "true") {
