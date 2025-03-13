@@ -9,6 +9,7 @@ const siteReviewsRouter = require("./routes/siteReviewsRouter");
 const categoryRouter = require("./routes/categoriesRouter");
 const productsRouter = require("./routes/productsRouter");
 const reviewsRouter = require("./routes/reviewsRouter");
+const uploadRouter = require("./routes/uploadRouter");
 
 const productExistMW = require("./middlewares/productExistMW");
 const morgan = require("morgan");
@@ -17,6 +18,8 @@ const morgan = require("morgan");
 connectDB();
 
 // Middleware pipleline
+app.use("/image", uploadRouter);
+
 app.use(express.json());
 
 app.use(morgan("dev"));
