@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv").config();
 const connectDB = require("./db");
 const app = express();
+const cors = require("cors");
 
 // Google Auth
 const session = require("express-session");
@@ -16,6 +17,7 @@ const siteReviewsRouter = require("./routes/siteReviewsRouter");
 const categoryRouter = require("./routes/categoriesRouter");
 const productsRouter = require("./routes/productsRouter");
 const reviewsRouter = require("./routes/reviewsRouter");
+const uploadRouter = require("./routes/uploadRouter");
 
 const productExistMW = require("./middlewares/productExistMW");
 const morgan = require("morgan");
@@ -24,6 +26,14 @@ const morgan = require("morgan");
 connectDB();
 
 // Middleware pipleline
+app.use("/image", uploadRouter);
+const corsOptions = {
+  credentials: true,
+  origin: ["*"],
+};
+
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
 app.use(morgan("dev"));

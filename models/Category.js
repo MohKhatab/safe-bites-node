@@ -22,6 +22,8 @@ categorySchema.pre("deleteOne", async function (next) {
   next();
 });
 
+//TODO: Soft deletion
+
 const Category = mongoose.model("Category", categorySchema);
 
 module.exports = Category;
