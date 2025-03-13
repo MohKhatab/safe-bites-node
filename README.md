@@ -31,7 +31,8 @@ npm install
 ```
 PORT=8282
 DATABASE=mongodb://localhost:27017/اسم_داتابيس_مونجو
-```
+SECRETKEY=اي كلمة سر
+
 
 ## ٣. عشان تشغلوه في طريقتين
 
