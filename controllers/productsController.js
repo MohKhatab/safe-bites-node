@@ -1,15 +1,21 @@
-const { date, number, array } = require("joi");
-const { message, error } = require("../utils/validation/userValidation");
 const Product = require("./../models/Product");
 const APIError = require("./../utils/errors/APIError");
+const {
+  cloudinary,
+  cloudinaryRemoveMultipleImage,
+} = require("../utils/cloudinary");
 
 //getProductById
 const getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate({
+      path: "images",
+      select: "imageUrl",
+    });
     if (!product) {
       throw new APIError("product not found", 404);
     }
+
     res
       .status(200)
       .send({ message: "product fetched successfully", data: product });
@@ -41,7 +47,11 @@ const updateProduct = async (req, res, next) => {
       req.params.id,
       req.body,
       { new: true, runValidators: true }
-    );
+    ).populate({
+      path: "images",
+      select: "imageUrl",
+    });
+
     res
       .status(200)
       .send({ message: "updated successfully", data: updatedProduct });
@@ -59,7 +69,7 @@ const deleteProduct = async (req, res, next) => {
     }
 
     await Product.findByIdAndDelete(req.params.id);
-    res.status(200).send({ message: "deletted successfully" });
+    res.status(200).send({ message: "deleted successfully" });
   } catch (err) {
     next(err);
   }
@@ -112,15 +122,21 @@ const filteredProduct = async (req, res, next) => {
       }
     }
 
-    const products = await Product.find(filter).sort(sortCreteria).populate({
-      path: "categories",
-      select: "name _id",
-    });
+    const products = await Product.find(filter)
+      .sort(sortCreteria)
+      .populate([
+        {
+          path: "categories",
+          select: "name _id",
+        },
+        { path: "images", select: "imageUrl" },
+      ])
+      .lean();
 
     res.status(200).json({
       message: "Fetched products successfully",
       count: products.length,
-      products,
+      data: products,
     });
   } catch (err) {
     next(err);
