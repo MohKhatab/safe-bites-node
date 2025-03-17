@@ -54,14 +54,17 @@ const userSchemaDb = new mongoose.Schema(
         "Please enter a valid phone",
       ],
     },
+    googleId: { type: String },
   },
   { timestamps: true }
 );
 
 userSchemaDb.pre("save", async function () {
   this.email = this.email.toLowerCase();
-  let hashedPassword = await bcrypt.hash(this.password, 10);
-  this.password = hashedPassword;
+  if(this.password !== 'google-auth'){
+    let hashedPassword = await bcrypt.hash(this.password, 10);
+    this.password = hashedPassword;
+  }
 });
 
 module.exports = mongoose.model("User", userSchemaDb);

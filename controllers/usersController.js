@@ -84,8 +84,7 @@ const loginUser = async (req, res, next) => {
   user.email = user.email.toLowerCase();
   let foundUser = await User.findOne({ email: user.email });
   if (!foundUser) {
-    // Search For Status Code
-    return res.status(200).json({ message: "Invalid Email / Password" });
+    return res.status(400).json({ message: "Invalid Email / Password" });
   }
   let truePassword = await bcrypt.compare(user.password, foundUser.password);
   if (!truePassword) {
@@ -102,8 +101,7 @@ const loginUser = async (req, res, next) => {
     { expiresIn: "10h" }
   );
 
-  res.header("x-auth-token", token);
-  res.status(200).json({ message: "Logged In Successfully" });
+  res.status(200).json({ message: "Logged In Successfully", token });
 };
 
 module.exports = {
