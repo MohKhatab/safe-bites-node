@@ -33,6 +33,14 @@ imageSchema.pre("findOneAndUpdate", async function (next) {
     const filter = this.getQuery();
     const existingImage = await this.model.findOne(filter);
 
+    if (
+      existingImage.reference.documentId &&
+      existingImage?.reference?.documentId.equals(
+        this.getUpdate().reference.documentId
+      )
+    )
+      next();
+
     if (existingImage?.reference?.documentId) {
       return next(new APIError("Image is already assigned", 400));
     }

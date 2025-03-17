@@ -2,6 +2,8 @@ const { string, required, number } = require("joi");
 const mongoose = require("mongoose");
 const { type } = require("../utils/validation/userValidation");
 const Image = require("./Image");
+const verifyReference = require("../utils/verifyReference");
+const APIError = require("../utils/errors/APIError");
 
 const productSchemaDb = new mongoose.Schema(
   {
@@ -105,6 +107,21 @@ productSchemaDb.pre("save", async function (next) {
   try {
     // Get the Image model from mongoose
     const Image = mongoose.model("Image");
+
+    if (this.images.length < 2) {
+      throw new APIError(
+        `Product must have at least 2 images to be created`,
+        400
+      );
+    }
+
+    const imageIds = this.images.map((image) => image._id);
+
+    if (await verifyReference(imageIds, "Image"))
+      throw new APIError(
+        `Some product image ids are invalid please verify that all ids are correct`,
+        400
+      );
 
     // Use promise API to attempt to update every single image reference given to the product
     await Promise.all(
