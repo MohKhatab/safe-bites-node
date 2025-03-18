@@ -4,7 +4,7 @@ const APIError = require("../utils/errors/APIError");
 
 const googleAuth = async (profile) => {
     try{
-        const foundUser = await User.findOne({email: profile.emails[0].value});
+        let foundUser = await User.findOne({email: profile.emails[0].value});
         if(!foundUser){
             foundUser = await User.create({
                 firstName: profile.name.givenName,

@@ -16,6 +16,7 @@ const siteReviewsRouter = require("./routes/siteReviewsRouter");
 const categoryRouter = require("./routes/categoriesRouter");
 const productsRouter = require("./routes/productsRouter");
 const reviewsRouter = require("./routes/reviewsRouter");
+const cartsRouter = require('./routes/cartsRouter')
 
 const productExistMW = require("./middlewares/productExistMW");
 const morgan = require("morgan");
@@ -33,6 +34,7 @@ app.use("/siteReviews", siteReviewsRouter);
 app.use("/categories", categoryRouter);
 app.use("/products", productsRouter);
 app.use("/products/:id/reviews", productExistMW, reviewsRouter);
+app.use('/carts', cartsRouter);
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
