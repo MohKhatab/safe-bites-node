@@ -5,6 +5,16 @@ const createProductReview = async (req, res, next) => {
   try {
     req.body.userId = req.user.id;
     req.product.reviews.push(req.body);
+
+    // Update the rating average for the product
+    const newRating =
+      (req.product.averageRating +
+        req.product.reviews.length -
+        1 +
+        req.body.rating) /
+      req.product.reviews.length;
+    req.product.averageRating = newRating;
+
     await req.product.save();
     res.status(201).json({ message: "Review added", product: req.product });
   } catch (error) {
@@ -65,8 +75,39 @@ const updateProductReview = async (req, res, next) => {
   }
 };
 
+const getProductReviews = async (req, res, next) => {
+  try {
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 4;
+    const skip = (page - 1) * limit;
+    const order = req.query.order === "asc" ? 1 : -1;
+
+    const productReviews = await Product.findById(req.product.id)
+      .select("reviews")
+      .populate("reviews.userId")
+      .lean();
+
+    const sortedReviews = productReviews.reviews.sort((a, b) => {
+      if (a.rating < b.rating) return -1 * order;
+      if (a.rating > b.rating) return 1 * order;
+      return 0;
+    });
+
+    const totalReviews = productReviews.reviews.length;
+    const paginatedReviews = productReviews.reviews.slice(skip, skip + limit);
+
+    res.status(200).send({
+      message: "retrieved reviews successfully",
+      data: { totalReviews, reviews: sortedReviews },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createProductReview,
   deleteProductReview,
   updateProductReview,
+  getProductReviews,
 };

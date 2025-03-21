@@ -25,6 +25,7 @@ const productSchema = joi.object({
   images: joi.array().items(joi.string()).min(1).required(),
   viewsCount: joi.number().integer().min(0).default(0),
   expiryDate: joi.date().required(),
+  brief: joi.string().trim().required(),
 });
 
 module.exports = productSchema;

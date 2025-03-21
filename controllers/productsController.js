@@ -8,10 +8,12 @@ const {
 //getProductById
 const getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).populate({
-      path: "images",
-      select: "imageUrl",
-    });
+    const product = await Product.findById(req.params.id)
+      .select("-reviews")
+      .populate({
+        path: "images",
+        select: "imageUrl",
+      });
     if (!product) {
       throw new APIError("product not found", 404);
     }
@@ -127,6 +129,7 @@ const filteredProduct = async (req, res, next) => {
     }
 
     const products = await Product.find(filter)
+      .select("-reviews")
       .sort(sortCreteria)
       .populate([
         {

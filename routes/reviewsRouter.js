@@ -21,4 +21,6 @@ router
     reviewsController.updateProductReview
   );
 
+router.route("/").get(reviewsController.getProductReviews);
+
 module.exports = router;
