@@ -17,6 +17,7 @@ const signUpSchema = joi.object({
     })
     .optional(),
   role: joi.string().default("user"),
+  image: joi.string().optional().trim(),
 });
 
 const signInSchema = joi.object({
