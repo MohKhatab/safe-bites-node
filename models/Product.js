@@ -48,7 +48,7 @@ const productSchemaDb = new mongoose.Schema(
           type: Number,
           min: 1,
           max: 5,
-          required: true,
+          // required: true,
         },
         reviewDescription: {
           type: String,
@@ -85,7 +85,7 @@ const productSchemaDb = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Image",
-        required: true,
+        // required: true,
       },
     ],
     viewsCount: {
@@ -94,7 +94,7 @@ const productSchemaDb = new mongoose.Schema(
     },
     expiryDate: {
       type: Date,
-      required: true,
+      // required: true,
     },
   },
   { timestamps: true }

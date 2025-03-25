@@ -30,7 +30,8 @@ const productSchema = joi.object({
   description: joi.string().min(3).max(200).required(),
   tags: joi.array().items(joi.string().min(3).max(20).optional).optional(),
   price: joi.number().integer().min(0).required(),
-  images: joi.array().items(joi.string().uri()).min(1).required(),
+  // images: joi.array().items(joi.string().uri()).min(1),
+  // // .required(),
   viewsCount: joi.number().integer().min(0).default(0),
   expiryDate: joi.date().required(),
 });
