@@ -18,7 +18,7 @@ router.post(
 );
 
 router.put(
-  "/id",
+  "/:id",
   protectMW,
   roleMW("admin"),
   validationMW(productSchema),

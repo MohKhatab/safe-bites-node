@@ -41,10 +41,9 @@ const createUser = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   try {
-    if (req.body.password) {
-      req.body.password = await bcrypt.hash(req.body.password, 10);
-    }
+    const { oldPassword, newPassword, ...updateData } = req.body;
 
+    // Deny update of another user
     if (req.user.id != req.params.id) {
       throw new APIError(
         "Forbidden: You are not allowed to edit the data of another user",
@@ -52,16 +51,40 @@ const updateUser = async (req, res, next) => {
       );
     }
 
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    // Get the user
+    const user = await User.findById(req.user.id);
 
     if (!user) {
       throw new APIError(`User not found`, 404);
     }
 
-    res.status(200).send({ message: "User updated successfully", data: user });
+    // Hash the incoming old password and new password
+    if (oldPassword && newPassword) {
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) throw new APIError("Old password is incorrect", 400);
+
+      updateData.password = newPassword;
+    }
+
+    if (updateData.address) {
+      updateData.address = { ...user.address, ...updateData.address };
+    }
+
+    // Remove any undefined field to avoid removing data from the user
+    Object.keys(updateData).forEach((key) => {
+      if (updateData[key] === undefined) delete updateData[key];
+    });
+
+    // Update user
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      updateData,
+      { new: true, runValidators: true, context: "query" }
+    );
+
+    res
+      .status(200)
+      .send({ message: "User updated successfully", data: updatedUser });
   } catch (err) {
     next(err);
   }

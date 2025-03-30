@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const APIError = require("./../utils/errors/APIError");
+const Product = require("./Product");
 
 const categorySchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },

@@ -17,8 +17,8 @@ const siteReviewsRouter = require("./routes/siteReviewsRouter");
 const categoryRouter = require("./routes/categoriesRouter");
 const productsRouter = require("./routes/productsRouter");
 const reviewsRouter = require("./routes/reviewsRouter");
+const cartsRouter = require("./routes/cartsRouter");
 const uploadRouter = require("./routes/uploadRouter");
-
 const productExistMW = require("./middlewares/productExistMW");
 const morgan = require("morgan");
 
@@ -29,7 +29,7 @@ connectDB();
 app.use("/image", uploadRouter);
 const corsOptions = {
   credentials: true,
-  origin: ["*"],
+  origin: ["http://localhost:4203"],
 };
 
 app.use(cors(corsOptions));
@@ -43,6 +43,7 @@ app.use("/siteReviews", siteReviewsRouter);
 app.use("/categories", categoryRouter);
 app.use("/products", productsRouter);
 app.use("/products/:id/reviews", productExistMW, reviewsRouter);
+app.use("/carts", cartsRouter);
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -85,11 +86,30 @@ app.use((err, req, res, next) => {
     });
   }
 
+  if (err.name == "ValidationError") {
+    return res.status(400).json({
+      error: `Mongoose Validation Error: ${err.message}`,
+    });
+  }
+
+  if (err.name == "CastError" && err.kind == "ObjectId") {
+    return res.status(400).json({
+      error: "Invalid reference ID, Please provide a correct ObjectId",
+    });
+  }
+
   if (err) {
     return res.status(err.statusCode || 500).json({
       error: err.message,
     });
   }
+  next();
+});
+
+app.all("*", (req, res, next) => {
+  res
+    .status(404)
+    .json({ error: `The path ${req.originalUrl} isn't on the server` });
   next();
 });
 

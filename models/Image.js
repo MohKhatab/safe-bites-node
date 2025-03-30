@@ -33,6 +33,14 @@ imageSchema.pre("findOneAndUpdate", async function (next) {
     const filter = this.getQuery();
     const existingImage = await this.model.findOne(filter);
 
+    if (
+      existingImage.reference.documentId &&
+      existingImage?.reference?.documentId.equals(
+        this.getUpdate().reference.documentId
+      )
+    )
+      next();
+
     if (existingImage?.reference?.documentId) {
       return next(new APIError("Image is already assigned", 400));
     }
@@ -45,21 +53,30 @@ imageSchema.pre("findOneAndUpdate", async function (next) {
 
 imageSchema.pre("findOneAndDelete", async function (next) {
   const filter = this.getFilter();
-  const imageDoc = await this.model.findById(filter._id);
+  const imageDoc = await this.model.findById(filter._id).lean();
 
   if (imageDoc.reference.documentId) {
     const refModel = mongoose.model(imageDoc.reference.model);
-    const refDoc = await refModel.findById(imageDoc.reference.documentId);
+    const refDoc = await refModel
+      .findById(imageDoc.reference.documentId)
+      .lean();
 
     if (refDoc) {
       const fieldData = refDoc[imageDoc.reference.field];
 
       // Case 1: Direct reference (non-array)
-      if (!Array.isArray(fieldData) && fieldData == imageDoc.id) {
-        throw new APIError(
-          `Cannot delete image. ${imageDoc.reference.model} requires this image.`,
-          400
-        );
+      if (!Array.isArray(fieldData)) {
+        console.log(imageDoc._id.toString());
+
+        if (fieldData === imageDoc._id.toString()) {
+          throw new APIError(
+            `Cannot delete image. ${imageDoc.reference.model} requires this image.`,
+            400
+          );
+        } else {
+          await cloudinaryRemoveImage(imageDoc.publicId);
+          return next();
+        }
       }
 
       // Case 2: Array with <= 1 elements

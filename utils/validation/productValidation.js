@@ -18,7 +18,6 @@ const productSchema = joi.object({
     )
     .optional(),
 
-  productOwner: joi.string().optional(),
   weight: joi.string().required(),
   description: joi.string().min(3).max(200).required(),
   tags: joi.array().items(joi.string().min(3).max(20).optional).optional(),
@@ -26,6 +25,7 @@ const productSchema = joi.object({
   images: joi.array().items(joi.string()).min(1).required(),
   viewsCount: joi.number().integer().min(0).default(0),
   expiryDate: joi.date().required(),
+  brief: joi.string().trim().required(),
 });
 
 module.exports = productSchema;

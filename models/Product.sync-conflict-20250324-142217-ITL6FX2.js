@@ -52,10 +52,6 @@ const productSchemaDb = new mongoose.Schema(
           max: 5,
           required: true,
         },
-        reviewTitle: {
-          type: String,
-          trim: true,
-        },
         reviewDescription: {
           type: String,
           trim: true,
@@ -78,10 +74,6 @@ const productSchemaDb = new mongoose.Schema(
     description: {
       type: String,
       required: true,
-      trim: true,
-    },
-    brief: {
-      type: String,
       trim: true,
     },
     tags: [
@@ -129,13 +121,13 @@ productSchemaDb.pre("save", async function (next) {
 
     const imageIds = this.images.map((image) => image._id);
 
-    if (!(await verifyReference(imageIds, "Image")))
+    if (await verifyReference(imageIds, "Image"))
       throw new APIError(
         `Some product image ids are invalid please verify that all ids are correct`,
         400
       );
 
-    if (!(await verifyReference(this.categories, "Category")))
+    if (await verifyReference(this.categories, "Category"))
       throw new APIError(
         `Some category ids are invalid please verify that all ids are correct`,
         400
@@ -159,12 +151,6 @@ productSchemaDb.pre("save", async function (next) {
   } catch (err) {
     next(err);
   }
-});
-
-productSchemaDb.pre("findOneAndUpdate", async function (next) {
-  const updateObj = this.getUpdate;
-  console.log("update fired");
-  console.log(updateObj);
 });
 
 // TODO:
@@ -215,11 +201,6 @@ productSchemaDb.pre("findOneAndDelete", async function (next) {
   } catch (err) {
     next(err);
   }
-});
-
-productSchemaDb.pre(/^find/, function (next) {
-  this.populate({ path: "images", select: "imageUrl" });
-  next();
 });
 
 productSchemaDb.index({ name: "text", description: "text" });
