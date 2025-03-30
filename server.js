@@ -19,6 +19,8 @@ const productsRouter = require("./routes/productsRouter");
 const reviewsRouter = require("./routes/reviewsRouter");
 const cartsRouter = require("./routes/cartsRouter");
 const uploadRouter = require("./routes/uploadRouter");
+const wishlistRouter = require("./routes/wishListRouter");
+
 const productExistMW = require("./middlewares/productExistMW");
 const morgan = require("morgan");
 
@@ -43,6 +45,7 @@ app.use("/siteReviews", siteReviewsRouter);
 app.use("/categories", categoryRouter);
 app.use("/products", productsRouter);
 app.use("/products/:id/reviews", productExistMW, reviewsRouter);
+app.use("/wishlist", wishlistRouter);
 app.use("/carts", cartsRouter);
 app.use(
   session({
