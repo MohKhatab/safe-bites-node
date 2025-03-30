@@ -66,7 +66,9 @@ imageSchema.pre("findOneAndDelete", async function (next) {
 
       // Case 1: Direct reference (non-array)
       if (!Array.isArray(fieldData)) {
-        if (fieldData == imageDoc.id) {
+        console.log(imageDoc._id.toString());
+
+        if (fieldData === imageDoc._id.toString()) {
           throw new APIError(
             `Cannot delete image. ${imageDoc.reference.model} requires this image.`,
             400

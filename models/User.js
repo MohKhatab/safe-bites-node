@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const verifyReference = require("../utils/verifyReference");
+const APIError = require("../utils/errors/APIError");
 
 const userSchemaDb = new mongoose.Schema(
   {
@@ -65,35 +66,53 @@ const userSchemaDb = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchemaDb.pre("save", async function (next) {
+userSchemaDb.pre(["save", "findOneAndUpdate"], async function (next) {
   try {
-    if (this.isModified("email")) {
-      this.email = this.email.toLowerCase();
+    /**
+     * since we are listening for "save" and "findOneAndUpdate", "this" can be a document or a query
+     * a query won't have the this.IsModified method so we work around by having an variable that holds the document
+     * and if it happens to be a query we change it to get the update data
+     */
+    let update = this;
+
+    if (this instanceof mongoose.Query) {
+      update = this.getUpdate();
+      if (!update) return next();
     }
 
-    if (this.isModified("password")) {
-      if (this.password !== "google-auth") {
-        let hashedPassword = await bcrypt.hash(this.password, 10);
-        this.password = hashedPassword;
+    if (update.email) {
+      update.email = update.email.toLowerCase();
+    }
+
+    if (update.password) {
+      if (update.password !== "google-auth") {
+        let hashedPassword = await bcrypt.hash(update.password, 10);
+        update.password = hashedPassword;
       }
     }
 
-    if (this.isModified("image")) {
-      if (!this.image) return;
+    if (update.image) {
+      if (!update.image) return;
+      const filter = this.getQuery();
+      const user = await this.model.findOne(filter).lean();
       const Image = mongoose.model("Image");
-      if (!(await verifyReference(this.image, "Image")))
+      if (!(await verifyReference(update.image, "Image")))
         throw new APIError(
           `User profile image id is invalid please verify that the image id is correct`,
           400
         );
 
-      await Image.findByIdAndUpdate(this.image, {
+      await Image.findByIdAndUpdate(update.image, {
         reference: {
           model: "User",
-          documentId: this._id,
+          documentId: update._id,
           field: "image",
         },
       });
+    }
+
+    if (this instanceof mongoose.Query) {
+      this.setUpdate(update);
     }
 
     next();
@@ -147,6 +166,8 @@ userSchemaDb.pre("findOneAndDelete", async function (next) {
       user.image = null;
       await user.save();
 
+      console.log(user);
+
       const Image = mongoose.model("Image");
       await Image.findByIdAndDelete(imageDoc);
     }
@@ -158,8 +179,7 @@ userSchemaDb.pre("findOneAndDelete", async function (next) {
 });
 
 userSchemaDb.pre(/^find/, function (next) {
-  this.select("-password");
-  // this.populate("image");
+  this.populate("image");
   next();
 });
 
