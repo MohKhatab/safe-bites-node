@@ -93,8 +93,6 @@ userSchemaDb.pre(["save", "findOneAndUpdate"], async function (next) {
 
     if (update.image) {
       if (!update.image) return;
-      const filter = this.getQuery();
-      const user = await this.model.findOne(filter).lean();
       const Image = mongoose.model("Image");
       if (!(await verifyReference(update.image, "Image")))
         throw new APIError(
