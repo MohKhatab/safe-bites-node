@@ -30,7 +30,7 @@ connectDB();
 app.use("/image", uploadRouter);
 const corsOptions = {
   credentials: true,
-  origin: ["*"],
+  origin: ["http://localhost:4203"],
 };
 
 app.use(cors(corsOptions));

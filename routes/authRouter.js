@@ -12,8 +12,9 @@ router.get("/google/callback", passport.authenticate('google',{failureRedirect: 
             throw new APIError("User or token not found", 404);
         }
 
-        res.setHeader("x-auth-token", token);
-        res.redirect("/profile");
+        // res.setHeader("x-auth-token", token);
+        // res.redirect("/profile");
+        res.status(200).json({ message: "Logged In Successfully", token }); 
     } catch (err) {
         throw new APIError("Error during Google auth callback",500)
     }
