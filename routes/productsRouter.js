@@ -12,7 +12,7 @@ router.get("/:id", productController.getProductById);
 router.post(
   "/",
   protectMW,
-  roleMW("admin"),
+  // roleMW("admin"),
   validationMW(productSchema),
   productController.addProduct
 );
