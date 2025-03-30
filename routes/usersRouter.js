@@ -12,7 +12,13 @@ router
 
 router.route("/:id").get(protectMW, usersController.getUserById);
 
-router.route("/:id").put(protectMW, usersController.updateUser);
+router
+  .route("/:id")
+  .put(
+    protectMW,
+    validationMW(userSchema.updateSchema),
+    usersController.updateUser
+  );
 
 router
   .route("/:id")

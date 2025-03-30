@@ -5,6 +5,13 @@ const createProductReview = async (req, res, next) => {
   try {
     req.body.userId = req.user.id;
     req.product.reviews.push(req.body);
+
+    // Update the rating average for the product
+    req.product.averageRating =
+      (req.product.averageRating * (req.product.reviews.length - 1) +
+        req.body.rating) /
+      req.product.reviews.length;
+
     await req.product.save();
     res.status(201).json({ message: "Review added", product: req.product });
   } catch (error) {
@@ -65,8 +72,31 @@ const updateProductReview = async (req, res, next) => {
   }
 };
 
+const getProductReviews = async (req, res, next) => {
+  try {
+    const productReviews = await Product.findById(req.product.id)
+      .select("reviews averageRating")
+      .populate({
+        path: "reviews.userId",
+        select: "firstName lastName -_id image",
+      })
+      .lean();
+
+    res.status(200).send({
+      message: "retrieved reviews successfully",
+      data: {
+        reviews: productReviews.reviews,
+        averageRating: productReviews.averageRating,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createProductReview,
   deleteProductReview,
   updateProductReview,
+  getProductReviews,
 };
