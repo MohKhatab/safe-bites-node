@@ -28,13 +28,12 @@ const morgan = require("morgan");
 connectDB();
 
 // Middleware pipleline
-app.use("/image", uploadRouter);
 const corsOptions = {
   credentials: true,
   origin: ["http://localhost:4203"],
 };
-
 app.use(cors(corsOptions));
+app.use("/image", uploadRouter);
 
 app.use(express.json());
 
