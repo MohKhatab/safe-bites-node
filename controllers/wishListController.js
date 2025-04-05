@@ -6,21 +6,21 @@ const APIError = require("../utils/errors/APIError");
 const getWishlist = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const wishlist = await Wishlist.findOne({ userId }).populate({
-      path: "products.productId",
-      select: "name price images",
-    });
+    const wishlist = await Wishlist.findOne({ userId })
+      .populate({
+        path: "products.productId",
+        select: "name price brief description images averageRating",
+      })
+      .select("-user");
 
     if (!wishlist || wishlist.products.length === 0) {
       throw new APIError("Wishlist is empty!", 200);
     }
 
-    res
-      .status(200)
-      .send({
-        message: "Wishlist retrieved successfully",
-        data: wishlist.products,
-      });
+    res.status(200).send({
+      message: "Wishlist retrieved successfully",
+      data: wishlist.products,
+    });
   } catch (err) {
     next(err);
   }
@@ -33,6 +33,7 @@ const addToWishlist = async (req, res, next) => {
     const productId = req.params.id;
 
     const product = await Product.findById(productId);
+
     if (!product) {
       throw new APIError("Product not found", 404);
     }
@@ -55,7 +56,15 @@ const addToWishlist = async (req, res, next) => {
     }
     await wishlist.save();
 
-    res.status(200).json({ message: "Item added to wishlist", wishlist });
+    const updatedWishlist = await Wishlist.findOne({ userId }).populate({
+      path: "products.productId",
+      select: "name price brief description images averageRating",
+    });
+
+    res.status(200).json({
+      message: "Item added to wishlist",
+      data: updatedWishlist.products,
+    });
   } catch (err) {
     next(err);
   }
@@ -77,14 +86,20 @@ const removeFromWishlist = async (req, res, next) => {
       (item) => item.productId.toString() !== productId
     );
 
-    if ((oldWishlistLength = wishlist.products.length)) {
-      return new APIError("Product not found in wishlist", 404);
+    if (oldWishlistLength == wishlist.products.length) {
+      throw new APIError("Product not found in wishlist", 404);
     }
     await wishlist.save();
 
-    res
-      .status(200)
-      .send({ message: "Product removed from wishlist", wishlist });
+    const updatedWishlist = await Wishlist.findOne({ userId }).populate({
+      path: "products.productId",
+      select: "name price brief description images averageRating",
+    });
+
+    res.status(200).send({
+      message: "Product removed from wishlist",
+      data: updatedWishlist.products,
+    });
   } catch (err) {
     next(err);
   }
