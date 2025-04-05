@@ -122,7 +122,7 @@ const loginUser = async (req, res, next) => {
       role: foundUser.role,
     },
     process.env.SECRETKEY,
-    { expiresIn: "10h" }
+    { expiresIn: "24h" }
   );
 
   res.status(200).json({ message: "Logged In Successfully", token });
