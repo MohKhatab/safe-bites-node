@@ -61,8 +61,10 @@ const addToCart = async (req, res, next) => {
       path: "products.productId",
       select: "name price images",
     });
-    
-    res.status(200).json({ message: "Item added to cart", populatedCart });
+
+    res
+      .status(200)
+      .json({ message: "Item added to cart", data: populatedCart.products });
   } catch (err) {
     next(err);
   }
@@ -98,7 +100,12 @@ const updateCart = async (req, res, next) => {
       select: "name price images",
     });
 
-    res.status(200).send({ message: "Cart updated successfully", data: populatedCart });
+    res
+      .status(200)
+      .send({
+        message: "Cart updated successfully",
+        data: populatedCart.products,
+      });
   } catch (err) {
     next(err);
   }
@@ -132,7 +139,10 @@ const removeFromCart = async (req, res, next) => {
       });
       return res
         .status(200)
-        .send({ message: "Product removed from cart", data: populatedCart });
+        .send({
+          message: "Product removed from cart",
+          data: populatedCart.products,
+        });
     } else {
       await Cart.deleteOne({ userId });
       return res.status(200).send({ message: "Cart is now empty and deleted" });
