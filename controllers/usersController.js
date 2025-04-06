@@ -39,6 +39,7 @@ const createUser = async (req, res, next) => {
   }
 };
 
+
 const updateUser = async (req, res, next) => {
   try {
     const { oldPassword, newPassword, ...updateData } = req.body;
@@ -62,8 +63,7 @@ const updateUser = async (req, res, next) => {
     if (oldPassword && newPassword) {
       const isMatch = await bcrypt.compare(oldPassword, user.password);
       if (!isMatch) throw new APIError("Old password is incorrect", 400);
-
-      updateData.password = newPassword;
+      updateData.password  = newPassword;
     }
 
     if (updateData.address) {
@@ -89,6 +89,7 @@ const updateUser = async (req, res, next) => {
     next(err);
   }
 };
+
 
 const deleteUser = async (req, res, next) => {
   try {
@@ -121,7 +122,7 @@ const loginUser = async (req, res, next) => {
       role: foundUser.role,
     },
     process.env.SECRETKEY,
-    { expiresIn: "10h" }
+    { expiresIn: "24h" }
   );
 
   res.status(200).json({ message: "Logged In Successfully", token });

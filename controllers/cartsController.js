@@ -53,11 +53,18 @@ const addToCart = async (req, res, next) => {
       }
     }
     await cart.save();
-    const populatedCart = await cart.populate({
+    // const populatedCart = await cart.populate({
+    //   path: "products.productId",
+    //   select: "name price images",
+    // });
+    const populatedCart = await Cart.findOne({ userId }).populate({
       path: "products.productId",
       select: "name price images",
     });
-    res.status(200).json({ message: "Item added to cart", populatedCart });
+
+    res
+      .status(200)
+      .json({ message: "Item added to cart", data: populatedCart.products });
   } catch (err) {
     next(err);
   }
@@ -88,7 +95,17 @@ const updateCart = async (req, res, next) => {
     }
 
     await cart.save();
-    res.status(200).send({ message: "Cart updated successfully", data: cart });
+    const populatedCart = await Cart.findOne({ userId }).populate({
+      path: "products.productId",
+      select: "name price images",
+    });
+
+    res
+      .status(200)
+      .send({
+        message: "Cart updated successfully",
+        data: populatedCart.products,
+      });
   } catch (err) {
     next(err);
   }
@@ -116,9 +133,16 @@ const removeFromCart = async (req, res, next) => {
 
     if (cart.products.length > 0) {
       await cart.save();
+      const populatedCart = await Cart.findOne({ userId }).populate({
+        path: "products.productId",
+        select: "name price images",
+      });
       return res
         .status(200)
-        .send({ message: "Product removed from cart", cart });
+        .send({
+          message: "Product removed from cart",
+          data: populatedCart.products,
+        });
     } else {
       await Cart.deleteOne({ userId });
       return res.status(200).send({ message: "Cart is now empty and deleted" });
