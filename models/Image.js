@@ -39,15 +39,15 @@ imageSchema.pre("findOneAndUpdate", async function (next) {
         this.getUpdate().reference.documentId
       )
     )
-      next();
+      return next();
 
     if (existingImage?.reference?.documentId) {
       return next(new APIError("Image is already assigned", 400));
     }
 
-    next();
+    return next();
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
