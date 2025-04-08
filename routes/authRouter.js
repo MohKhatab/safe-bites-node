@@ -42,6 +42,9 @@ router.get(
         return res.status(400).json({ message: "Authentication failed" });
       }
 
+        // res.setHeader("x-auth-token", token);
+        // res.redirect("/profile");
+        // res.status(200).json({ message: "Logged In Successfully", token }); 
       
       res.send(`
         <script>

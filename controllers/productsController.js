@@ -121,9 +121,15 @@ const filteredProduct = async (req, res, next) => {
       }
     }
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const products = await Product.find(filter)
       .select("-reviews")
       .sort(sortCreteria)
+      .skip(skip)
+      .limit(limit)
       .populate([
         {
           path: "categories",
@@ -132,13 +138,19 @@ const filteredProduct = async (req, res, next) => {
       ])
       .lean();
 
+      const total = await Product.countDocuments(filter);
+
     res.status(200).json({
       message: "Fetched products successfully",
       count: products.length,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
       data: products,
     });
   } catch (err) {
-    next(err);
+    console.error("Error fetching products:", err);
+    res.status(500).json({ message: 'Error fetching products' });
   }
 };
 
