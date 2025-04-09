@@ -36,17 +36,28 @@ const addProduct = async (req, res, next) => {
 // updateProduct
 const updateProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const productId = req.params.id;
+    const { quantityChange, operation } = req.body;
+
+    const product = await Product.findById(productId);
     if (!product) {
       throw new APIError("product not founded", 404);
     }
 
-    const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const parsedQuantityChange = Number(quantityChange);
+    if (isNaN(parsedQuantityChange)) {
+      throw new APIError("Invalid quantityChange", 400);
+    }
 
+    if (operation === 'increase') { 
+      if (product.quantity < Math.abs(parsedQuantityChange)) {
+        throw new APIError("Not enough stock to decrease", 400);
+      }
+      product.quantity -= Math.abs(parsedQuantityChange);
+    } else if (operation === 'decrease') { 
+      product.quantity += Math.abs(parsedQuantityChange);
+    }
+    const updatedProduct = await product.save();
     res
       .status(200)
       .send({ message: "updated successfully", data: updatedProduct });
