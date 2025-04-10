@@ -60,10 +60,21 @@ const updateUser = async (req, res, next) => {
     }
 
     // Hash the incoming old password and new password
-    if (oldPassword && newPassword) {
-      const isMatch = await bcrypt.compare(oldPassword, user.password);
-      if (!isMatch) throw new APIError("Old password is incorrect", 400);
-      updateData.password  = newPassword;
+    // if (oldPassword && newPassword) {
+    //   const isMatch = await bcrypt.compare(oldPassword, user.password);
+    //   if (!isMatch) throw new APIError("Old password is incorrect", 400);
+    //   updateData.password  = newPassword;
+    // }
+
+    if (newPassword){
+      if (user.password !== 'google-auth'){
+        if (!oldPassword){
+          throw new APIError("Old password is required", 400);
+        }
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) throw new APIError("Old password is incorrect", 400);
+      }
+      updateData.password = newPassword;
     }
 
     if (updateData.address) {
