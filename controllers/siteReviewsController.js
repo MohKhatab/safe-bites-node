@@ -5,6 +5,7 @@ const createSiteReview = async (req, res, next) => {
   try {
     req.body.poster = req.user.id;
     const siteReview = await SiteReview.create(req.body);
+
     res
       .status(200)
       .json({ message: "Review created successfully!", data: siteReview });

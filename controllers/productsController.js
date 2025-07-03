@@ -1,4 +1,5 @@
 const Product = require("./../models/Product");
+const Image = require("./../models/Image");
 const APIError = require("./../utils/errors/APIError");
 const {
   cloudinary,
@@ -6,76 +7,45 @@ const {
 } = require("../utils/cloudinary");
 
 //getProductById
+// getProductById
 const getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).select("-reviews");
+    const product = await Product.findById(req.params.id)
+      .select("-reviews")
+      .lean();
 
     if (!product) {
-      throw new APIError("product not found", 404);
+      throw new APIError("Product not found", 404);
+    }
+
+    if (product.images && product.images.length > 0) {
+      const imageIds = product.images.filter(
+        (img) =>
+          typeof img === "object" &&
+          img !== null &&
+          img.toString().match(/^[a-f\d]{24}$/i)
+      );
+
+      const populatedImages = await Image.find({
+        _id: { $in: imageIds },
+      }).lean();
+
+      product.images = product.images.map((img) => {
+        if (typeof img === "string") {
+          return { imageUrl: img };
+        }
+
+        const foundImage = populatedImages.find(
+          (imgDoc) => imgDoc._id.toString() === img.toString()
+        );
+
+        return foundImage || img;
+      });
     }
 
     res
       .status(200)
-      .send({ message: "product fetched successfully", data: product });
-  } catch (err) {
-    next(err);
-  }
-};
-
-//addProduct
-const addProduct = async (req, res, next) => {
-  try {
-    req.body.productOwner = req.user.id;
-    const product = await Product.create(req.body);
-    res.status(200).send({ message: "added successfully ", data: product });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// updateProduct
-const updateProduct = async (req, res, next) => {
-  try {
-    const productId = req.params.id;
-    const { quantityChange, operation } = req.body;
-
-    const product = await Product.findById(productId);
-    if (!product) {
-      throw new APIError("product not founded", 404);
-    }
-
-    const parsedQuantityChange = Number(quantityChange);
-    if (isNaN(parsedQuantityChange)) {
-      throw new APIError("Invalid quantityChange", 400);
-    }
-
-    if (operation === 'increase') { 
-      if (product.quantity < Math.abs(parsedQuantityChange)) {
-        throw new APIError("Not enough stock to decrease", 400);
-      }
-      product.quantity -= Math.abs(parsedQuantityChange);
-    } else if (operation === 'decrease') { 
-      product.quantity += Math.abs(parsedQuantityChange);
-    }
-    const updatedProduct = await product.save();
-    res
-      .status(200)
-      .send({ message: "updated successfully", data: updatedProduct });
-  } catch (err) {
-    next(err);
-  }
-};
-
-//deleteProduct
-const deleteProduct = async (req, res, next) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      throw new APIError("product not founded", 404);
-    }
-
-    await Product.findByIdAndDelete(req.params.id);
-    res.status(200).send({ message: "deleted successfully" });
+      .send({ message: "Product fetched successfully", data: product });
   } catch (err) {
     next(err);
   }
@@ -141,15 +111,41 @@ const filteredProduct = async (req, res, next) => {
       .sort(sortCreteria)
       .skip(skip)
       .limit(limit)
-      .populate([
-        {
-          path: "categories",
-          select: "name _id",
-        },
-      ])
+      .populate({
+        path: "categories",
+        select: "name _id",
+      })
       .lean();
 
-      const total = await Product.countDocuments(filter);
+    const populatedProducts = await Promise.all(
+      products.map(async (product) => {
+        if (product.images?.length > 0) {
+          const imageIds = product.images.filter(
+            (img) =>
+              typeof img === "object" &&
+              img !== null &&
+              img.toString().match(/^[a-f\d]{24}$/i)
+          );
+
+          const populatedImages = await Image.find({
+            _id: { $in: imageIds },
+          }).lean();
+
+          product.images = product.images.map((img) => {
+            if (typeof img === "string") return { imageUrl: img };
+
+            const found = populatedImages.find(
+              (imgDoc) => imgDoc._id.toString() === img.toString()
+            );
+            return found || img; // fallback to ObjectId if not found
+          });
+        }
+
+        return product;
+      })
+    );
+
+    const total = await Product.countDocuments(filter);
 
     res.status(200).json({
       message: "Fetched products successfully",
@@ -157,18 +153,18 @@ const filteredProduct = async (req, res, next) => {
       total,
       page,
       totalPages: Math.ceil(total / limit),
-      data: products,
+      data: populatedProducts,
     });
   } catch (err) {
     console.error("Error fetching products:", err);
-    res.status(500).json({ message: 'Error fetching products' });
+    res.status(500).json({ message: "Error fetching products" });
   }
 };
 
 module.exports = {
   getProductById,
-  addProduct,
-  updateProduct,
-  deleteProduct,
+  // addProduct,
+  // updateProduct,
+  // deleteProduct,
   filteredProduct,
 };

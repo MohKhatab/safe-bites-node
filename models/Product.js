@@ -217,11 +217,6 @@ productSchemaDb.pre("findOneAndDelete", async function (next) {
   }
 });
 
-productSchemaDb.pre(/^find/, function (next) {
-  this.populate({ path: "images", select: "imageUrl" });
-  next();
-});
-
 productSchemaDb.index({ name: "text", description: "text" });
 
 module.exports = mongoose.model("Product", productSchemaDb);
