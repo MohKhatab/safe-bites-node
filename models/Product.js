@@ -167,6 +167,34 @@ productSchemaDb.pre("findOneAndUpdate", async function (next) {
   console.log(updateObj);
 });
 
+// Before deleting a product we have to delete that product's images
+productSchemaDb.pre("findOneAndDelete", async function (next) {
+  try {
+    const filter = this.getQuery();
+    const product = await this.model.findOne(filter);
+
+    if (product.images && product.images.length) {
+      product.images.forEach(async (image) => {
+        await Image.findByIdAndDelete(image);
+      });
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+productSchemaDb.pre(/^find/, function (next) {
+  this.populate({ path: "images", select: "imageUrl" });
+  next();
+});
+
+productSchemaDb.index({ name: "text", description: "text" });
+
+module.exports = mongoose.model("Product", productSchemaDb);
+
+
 // TODO:
 // productSchemaDb.pre("findOneAndUpdate", async function (next) {
 //   try {
@@ -198,30 +226,3 @@ productSchemaDb.pre("findOneAndUpdate", async function (next) {
 //     next(err);
 //   }
 // });
-
-// Before deleting a product we have to delete that product's images
-productSchemaDb.pre("findOneAndDelete", async function (next) {
-  try {
-    const filter = this.getQuery();
-    const product = await this.model.findOne(filter);
-
-    if (product.images && product.images.length) {
-      product.images.forEach(async (image) => {
-        await Image.findByIdAndDelete(image);
-      });
-    }
-
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
-
-productSchemaDb.pre(/^find/, function (next) {
-  this.populate({ path: "images", select: "imageUrl" });
-  next();
-});
-
-productSchemaDb.index({ name: "text", description: "text" });
-
-module.exports = mongoose.model("Product", productSchemaDb);
