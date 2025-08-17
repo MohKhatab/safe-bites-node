@@ -39,6 +39,7 @@ const createUser = async (req, res, next) => {
   }
 };
 
+
 const updateUser = async (req, res, next) => {
   try {
     const { oldPassword, newPassword, ...updateData } = req.body;
@@ -59,10 +60,20 @@ const updateUser = async (req, res, next) => {
     }
 
     // Hash the incoming old password and new password
-    if (oldPassword && newPassword) {
-      const isMatch = await bcrypt.compare(oldPassword, user.password);
-      if (!isMatch) throw new APIError("Old password is incorrect", 400);
+    // if (oldPassword && newPassword) {
+    //   const isMatch = await bcrypt.compare(oldPassword, user.password);
+    //   if (!isMatch) throw new APIError("Old password is incorrect", 400);
+    //   updateData.password  = newPassword;
+    // }
 
+    if (newPassword){
+      if (user.password !== 'google-auth'){
+        if (!oldPassword){
+          throw new APIError("Old password is required", 400);
+        }
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) throw new APIError("Old password is incorrect", 400);
+      }
       updateData.password = newPassword;
     }
 
@@ -89,6 +100,7 @@ const updateUser = async (req, res, next) => {
     next(err);
   }
 };
+
 
 const deleteUser = async (req, res, next) => {
   try {
@@ -121,7 +133,7 @@ const loginUser = async (req, res, next) => {
       role: foundUser.role,
     },
     process.env.SECRETKEY,
-    { expiresIn: "10h" }
+    { expiresIn: "24h" }
   );
 
   res.status(200).json({ message: "Logged In Successfully", token });

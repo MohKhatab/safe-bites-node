@@ -1,4 +1,5 @@
 const Product = require("./../models/Product");
+const Image = require("./../models/Image");
 const APIError = require("./../utils/errors/APIError");
 const {
   cloudinary,
@@ -6,65 +7,45 @@ const {
 } = require("../utils/cloudinary");
 
 //getProductById
+// getProductById
 const getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).select("-reviews");
+    const product = await Product.findById(req.params.id)
+      .select("-reviews")
+      .lean();
 
     if (!product) {
-      throw new APIError("product not found", 404);
+      throw new APIError("Product not found", 404);
+    }
+
+    if (product.images && product.images.length > 0) {
+      const imageIds = product.images.filter(
+        (img) =>
+          typeof img === "object" &&
+          img !== null &&
+          img.toString().match(/^[a-f\d]{24}$/i)
+      );
+
+      const populatedImages = await Image.find({
+        _id: { $in: imageIds },
+      }).lean();
+
+      product.images = product.images.map((img) => {
+        if (typeof img === "string") {
+          return { imageUrl: img };
+        }
+
+        const foundImage = populatedImages.find(
+          (imgDoc) => imgDoc._id.toString() === img.toString()
+        );
+
+        return foundImage || img;
+      });
     }
 
     res
       .status(200)
-      .send({ message: "product fetched successfully", data: product });
-  } catch (err) {
-    next(err);
-  }
-};
-
-//addProduct
-const addProduct = async (req, res, next) => {
-  try {
-    req.body.productOwner = req.user.id;
-    const product = await Product.create(req.body);
-    res.status(200).send({ message: "added successfully ", data: product });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// updateProduct
-const updateProduct = async (req, res, next) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      throw new APIError("product not founded", 404);
-    }
-
-    const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    res
-      .status(200)
-      .send({ message: "updated successfully", data: updatedProduct });
-  } catch (err) {
-    next(err);
-  }
-};
-
-//deleteProduct
-const deleteProduct = async (req, res, next) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      throw new APIError("product not founded", 404);
-    }
-
-    await Product.findByIdAndDelete(req.params.id);
-    res.status(200).send({ message: "deleted successfully" });
+      .send({ message: "Product fetched successfully", data: product });
   } catch (err) {
     next(err);
   }
@@ -121,31 +102,69 @@ const filteredProduct = async (req, res, next) => {
       }
     }
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const products = await Product.find(filter)
       .select("-reviews")
       .sort(sortCreteria)
-      .populate([
-        {
-          path: "categories",
-          select: "name _id",
-        },
-      ])
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: "categories",
+        select: "name _id",
+      })
       .lean();
+
+    const populatedProducts = await Promise.all(
+      products.map(async (product) => {
+        if (product.images?.length > 0) {
+          const imageIds = product.images.filter(
+            (img) =>
+              typeof img === "object" &&
+              img !== null &&
+              img.toString().match(/^[a-f\d]{24}$/i)
+          );
+
+          const populatedImages = await Image.find({
+            _id: { $in: imageIds },
+          }).lean();
+
+          product.images = product.images.map((img) => {
+            if (typeof img === "string") return { imageUrl: img };
+
+            const found = populatedImages.find(
+              (imgDoc) => imgDoc._id.toString() === img.toString()
+            );
+            return found || img; // fallback to ObjectId if not found
+          });
+        }
+
+        return product;
+      })
+    );
+
+    const total = await Product.countDocuments(filter);
 
     res.status(200).json({
       message: "Fetched products successfully",
       count: products.length,
-      data: products,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      data: populatedProducts,
     });
   } catch (err) {
-    next(err);
+    console.error("Error fetching products:", err);
+    res.status(500).json({ message: "Error fetching products" });
   }
 };
 
 module.exports = {
   getProductById,
-  addProduct,
-  updateProduct,
-  deleteProduct,
+  // addProduct,
+  // updateProduct,
+  // deleteProduct,
   filteredProduct,
 };

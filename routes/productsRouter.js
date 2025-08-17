@@ -9,28 +9,28 @@ const roleMW = require("./../middlewares/roleMW");
 
 router.get("/:id", productController.getProductById);
 
-router.post(
-  "/",
-  protectMW,
-  // roleMW("admin"),
-  validationMW(productSchema),
-  productController.addProduct
-);
+// router.post(
+//   "/",
+//   protectMW,
+//   // roleMW("admin"),
+//   validationMW(productSchema),
+//   productController.addProduct
+// );
 
-router.put(
-  "/:id",
-  protectMW,
-  roleMW("admin"),
-  validationMW(productSchema),
-  productController.updateProduct
-);
+// router.put(
+//   "/:id",
+//   protectMW,
+//   // roleMW("admin"),
+//   // validationMW(productSchema),
+//   productController.updateProduct
+// );
 
-router.delete(
-  "/:id",
-  protectMW,
-  roleMW("admin"),
-  productController.deleteProduct
-);
+// router.delete(
+//   "/:id",
+//   protectMW,
+//   roleMW("admin"),
+//   productController.deleteProduct
+// );
 
 router.get("/", productController.filteredProduct);
 

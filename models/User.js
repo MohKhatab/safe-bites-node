@@ -100,10 +100,21 @@ userSchemaDb.pre(["save", "findOneAndUpdate"], async function (next) {
           400
         );
 
+      let user;
+      if (this instanceof mongoose.Query) {
+        const filter = this.getQuery();
+        user = await this.model.findOne(filter).lean();
+        if (user.image) {
+          await Image.findByIdAndDelete(user.image);
+        }
+      } else {
+        user = this;
+      }
+
       await Image.findByIdAndUpdate(update.image, {
         reference: {
           model: "User",
-          documentId: update._id,
+          documentId: user._id,
           field: "image",
         },
       });
@@ -114,40 +125,6 @@ userSchemaDb.pre(["save", "findOneAndUpdate"], async function (next) {
     }
 
     next();
-  } catch (err) {
-    next(err);
-  }
-});
-
-userSchemaDb.pre("findOneAndUpdate", async function (next) {
-  try {
-    const updateObj = this.getUpdate();
-    const filter = this.getQuery();
-    const user = await this.model.findOne(filter).lean();
-
-    if (!updateObj.image) return next();
-
-    const Image = mongoose.model("Image");
-
-    if (!(await verifyReference(updateObj.image, "Image")))
-      throw new APIError(
-        `User profile image id is invalid please verify that the image id is correct`,
-        400
-      );
-
-    if (user.image === updateObj.image) {
-      return next();
-    } else {
-      await Image.findByIdAndDelete(user.image);
-
-      await Image.findByIdAndUpdate(updateObj.image, {
-        reference: {
-          model: "User",
-          documentId: user._id,
-          field: "image",
-        },
-      });
-    }
   } catch (err) {
     next(err);
   }

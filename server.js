@@ -18,6 +18,8 @@ const categoryRouter = require("./routes/categoriesRouter");
 const productsRouter = require("./routes/productsRouter");
 const reviewsRouter = require("./routes/reviewsRouter");
 const cartsRouter = require("./routes/cartsRouter");
+const checkoutRouter = require("./routes/checkoutRouter");
+const orderRouter = require("./routes/orderRouter");
 const uploadRouter = require("./routes/uploadRouter");
 const wishlistRouter = require("./routes/wishListRouter");
 
@@ -26,15 +28,16 @@ const morgan = require("morgan");
 
 // Connect Database
 connectDB();
+const webhookController = require('./controllers/webhookController');
+app.post('/webhook', express.raw({ type: 'application/json' }), webhookController.stripeWebhook);
 
 // Middleware pipleline
-app.use("/image", uploadRouter);
 const corsOptions = {
   credentials: true,
   origin: ["http://localhost:4203"],
 };
-
 app.use(cors(corsOptions));
+app.use("/image", uploadRouter);
 
 app.use(express.json());
 
@@ -47,6 +50,8 @@ app.use("/products", productsRouter);
 app.use("/products/:id/reviews", productExistMW, reviewsRouter);
 app.use("/wishlist", wishlistRouter);
 app.use("/carts", cartsRouter);
+app.use("/checkout", checkoutRouter);
+app.use("/orders", orderRouter);
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
